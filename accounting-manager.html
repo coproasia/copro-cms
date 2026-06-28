@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copro Management System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script>
+        if (typeof XLSX === 'undefined') {
+            var script = document.createElement('script');
+            script.src = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF UI Display', 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin: 0;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .year-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .year-selector label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .year-selector select {
+            padding: 8px 15px;
+            border: 2px solid #059669;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: #059669;
+            font-weight: 600;
+            padding: 8px 15px;
+            border: 2px solid #059669;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            background: #059669;
+            color: white;
+        }
+
+        .content {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 20px 30px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button:hover {
+            background: #f5f5f5;
+        }
+
+        .tab-button.active {
+            color: #059669;
+            border-bottom-color: #059669;
+            background: #f0fdf4;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+            opacity: 1;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            opacity: 1;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #059669;
+            box-shadow: 0 0 5px rgba(5, 150, 105, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #047857;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #4c6ef5;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #364fdb;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .records-table thead {
+            background: #f0fdf4;
+            border-bottom: 2px solid #059669;
+        }
+
+        .records-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .records-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .amount-in {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .amount-out {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .monthly-summary {
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #059669;
+        }
+
+        .summary-row {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 20px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .summary-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .summary-value {
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .summary-value.positive {
+            color: #059669;
+        }
+
+        .summary-value.negative {
+            color: #dc2626;
+        }
+
+        .month-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .month-tab {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .month-tab:hover {
+            background: #e0e0e0;
+        }
+
+        .month-tab.active {
+            background: #059669;
+            color: white;
+            border-color: #059669;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #059669;
+            margin: 15px 0 10px 0;
+        }
+
+        .info-box {
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #059669;
+            margin-bottom: 20px;
+        }
+
+        .warning-box {
+            background: #fee2e2;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #dc2626;
+            margin: 20px 0;
+        }
+
+        .warning-box h3 {
+            color: #dc2626;
+        }
+
+        .remove-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .remove-btn:hover {
+            background: #ff5252;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <img src="Copro_Logo.png" alt="Copro Logo" style="max-width: 200px; height: auto; margin-bottom: 10px;">
+                <h1>Copro Management System</h1>
+            </div>
+            <div class="header-right">
+                <div class="year-selector">
+                    <label>Year:</label>
+                    <select id="yearSelector" onchange="changeYear()"></select>
+                </div>
+                <a href="index.html" class="back-link">← Dashboard</a>
+            </div>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab(event, 'payment-in')">💰 Payment In</button>
+                <button class="tab-button" onclick="switchTab(event, 'payment-out')">💳 Payment Out</button>
+                <button class="tab-button" onclick="switchTab(event, 'summary')">📈 Summary</button>
+                <button class="tab-button" onclick="switchTab(event, 'pl-report')">📊 P&L Report</button>
+                <button class="tab-button" onclick="switchTab(event, 'backup')">💾 Backup & Restore</button>
+            </div>
+
+            <!-- Payment In Tab -->
+            <div id="payment-in" class="tab-content active">
+                <h2>Recorded Invoices</h2>
+                <div class="month-tabs" id="paymentInMonthTabs"></div>
+                <div id="invoicesContent"></div>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;">
+                    <button class="btn btn-secondary" onclick="exportToExcel()">📥 Create Annual Excel Data</button>
+                </div>
+            </div>
+
+            <!-- Payment Out Tab -->
+            <div id="payment-out" class="tab-content">
+                <h2>Record Payment Out</h2>
+                <div class="form-group">
+                    <label>Supplier Name (First 6 letters used)</label>
+                    <input type="text" id="supplierName" placeholder="e.g., ABC Industries">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Purpose of Payment</label>
+                        <input type="text" id="paymentPurpose" placeholder="e.g., Equipment Purchase">
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="paymentDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Amount (RM)</label>
+                    <input type="number" id="paymentAmount" placeholder="0.00" step="0.01" min="0">
+                </div>
+                <button class="btn btn-primary" onclick="recordPaymentOut()">✅ Record Payment</button>
+
+                <h2 style="margin-top: 40px;">Recorded Payments</h2>
+                <div class="month-tabs" id="paymentOutMonthTabs"></div>
+                <div id="paymentsContent"></div>
+            </div>
+
+            <!-- Summary Tab -->
+            <div id="summary" class="tab-content">
+                <h2>Monthly Summary - <span id="summaryYear"></span></h2>
+                <div class="month-tabs" id="summaryMonthTabs"></div>
+                <div id="summaryContent"></div>
+
+                <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #ddd;">
+                    <h3>Year-End Summary</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                        <div class="info-box">
+                            <h4 style="color: #059669; margin: 0 0 10px 0;">Total Income</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #059669;" id="yearlyIncome">RM 0.00</div>
+                        </div>
+                        <div style="background: #fee2e2; padding: 20px; border-radius: 5px; border-left: 4px solid #dc2626;">
+                            <h4 style="color: #dc2626; margin: 0 0 10px 0;">Total Expenses</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #dc2626;" id="yearlyExpenses">RM 0.00</div>
+                        </div>
+                    </div>
+                    <div class="monthly-summary">
+                        <div class="summary-row">
+                            <span class="summary-label">NET PROFIT / (LOSS):</span>
+                            <span class="summary-value" id="yearlyNet" style="font-size: 18px;">RM 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- P&L Report Tab -->
+            <div id="pl-report" class="tab-content">
+                <h2>📊 Professional Profit & Loss Report</h2>
+                
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 5px; border-left: 4px solid #059669; margin-bottom: 20px;">
+                    <p style="color: #333; margin: 0;"><strong>📌 Select your financial year period (approximately 365 days)</strong></p>
+                    <p style="color: #666; font-size: 13px; margin: 5px 0 0 0;">Example: Feb 1, 2025 to Jan 31, 2026 | Mar 1, 2024 to Feb 28, 2025</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label style="font-weight: 600; color: #333;">Financial Year Start Date:</label>
+                        <input type="date" id="plStartDate" style="padding: 10px; border: 2px solid #059669; border-radius: 5px; font-weight: 600; margin-top: 8px;">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600; color: #333;">Financial Year End Date:</label>
+                        <input type="date" id="plEndDate" style="padding: 10px; border: 2px solid #059669; border-radius: 5px; font-weight: 600; margin-top: 8px;">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="generateCustomPLReport()" style="width: 100%; margin-bottom: 20px;">📄 Generate P&L Report</button>
+
+                <div id="plValidationMessage" style="margin-bottom: 20px;"></div>
+
+                <div id="plReportContent"></div>
+
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #ddd;">
+                    <button class="btn btn-secondary" onclick="exportCustomPLAsExcel()" style="display: none;" id="exportPLButton">📥 Export P&L as Excel</button>
+                </div>
+            </div>
+
+            <!-- Backup & Restore Tab -->
+            <div id="backup" class="tab-content">
+                <h2>💾 Backup & Data Recovery</h2>
+                
+                <div class="info-box">
+                    <h3 style="margin-top: 0;">How It Works</h3>
+                    <p>Your data is stored in browser memory. If you clear cache or switch devices, restore from your Excel backup file with one click!</p>
+                </div>
+
+                <h3>🔄 Restore Data from Excel</h3>
+                <p style="color: #666; margin-bottom: 15px;">Select an Excel file you previously created (ACCOUNT-COPRO-XXXX.xlsx):</p>
+                <div class="form-group">
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls">
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="restoreFromExcel()">📥 Restore Data Now</button>
+                    <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+                </div>
+
+                <div id="restoreMessage" style="margin-top: 20px;"></div>
+
+                <div class="warning-box">
+                    <h3>⚠️ Important Safety Tips</h3>
+                    <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                        <li>✅ Keep multiple Excel backups in safe locations</li>
+                        <li>✅ Create Excel backups weekly or monthly</li>
+                        <li>⚠️ Only clear data in emergencies</li>
+                        <li>✅ Always export before clearing browser cache</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeYearSelector();
+            initializePLDefaultDates();
+            setPaymentDate();
+            displayPaymentIn();
+            displayPaymentOut();
+            displaySummary();
+        });
+
+        function initializeYearSelector() {
+            const now = new Date();
+            const currentYearValue = now.getFullYear();
+            const selector = document.getElementById('yearSelector');
+            
+            for (let year = 2024; year <= currentYearValue + 1; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === currentYearValue) option.selected = true;
+                selector.appendChild(option);
+            }
+            
+            currentYear = currentYearValue;
+            document.getElementById('summaryYear').textContent = currentYear;
+        }
+
+        function changeYear() {
+            currentYear = parseInt(document.getElementById('yearSelector').value);
+            document.getElementById('summaryYear').textContent = currentYear;
+            displayPaymentIn();
+            displayPaymentOut();
+            displaySummary();
+        }
+
+        function setPaymentDate() {
+            const today = new Date();
+            const dateStr = today.getFullYear() + '-' + 
+                          String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(today.getDate()).padStart(2, '0');
+            document.getElementById('paymentDate').value = dateStr;
+        }
+
+        function recordPaymentOut() {
+            const supplier = document.getElementById('supplierName').value.trim();
+            const purpose = document.getElementById('paymentPurpose').value.trim();
+            const dateStr = document.getElementById('paymentDate').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+
+            if (!supplier || !purpose || !dateStr || !amount || amount <= 0) {
+                showMessage('Please fill all fields correctly', 'error');
+                return;
+            }
+
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            
+            if (year !== currentYear) {
+                showMessage(`Please use a date in ${currentYear}`, 'error');
+                return;
+            }
+
+            const storageKey = `copro_payments_${year}_${month}`;
+            let payments = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+            const dayStr = String(date.getDate()).padStart(2, '0');
+            const fullDateStr = `${dayStr}-${month}-${year}`;
+            const partyCode = supplier.substring(0, 6).toUpperCase();
+
+            payments.push({
+                date: fullDateStr,
+                party: partyCode,
+                purpose: purpose,
+                amount: amount,
+                type: 'payment'
+            });
+
+            localStorage.setItem(storageKey, JSON.stringify(payments));
+            showMessage(`✅ Successfully recorded - Payment to ${partyCode} (RM ${amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})`, 'success');
+            
+            document.getElementById('supplierName').value = '';
+            document.getElementById('paymentPurpose').value = '';
+            document.getElementById('paymentAmount').value = '';
+            setPaymentDate();
+
+            displayPaymentOut();
+        }
+
+        function displayPaymentIn() {
+            const monthTabs = document.getElementById('paymentInMonthTabs');
+            monthTabs.innerHTML = '';
+            let hasData = false;
+
+            for (let m = 0; m < 12; m++) {
+                const month = String(m + 1).padStart(2, '0');
+                const key = `copro_invoices_${currentYear}_${month}`;
+                const data = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                if (data.length > 0) {
+                    hasData = true;
+                    const btn = document.createElement('button');
+                    btn.className = 'month-tab' + (m === currentMonth ? ' active' : '');
+                    btn.textContent = months[m].substring(0, 3) + ` (${data.length})`;
+                    btn.onclick = () => showMonthInvoices(m);
+                    monthTabs.appendChild(btn);
+                }
+            }
+
+            if (!hasData) {
+                document.getElementById('invoicesContent').innerHTML = '<div class="no-data">No invoices recorded for ' + currentYear + '</div>';
+            } else {
+                showMonthInvoices(currentMonth);
+            }
+        }
+
+        function showMonthInvoices(monthIndex) {
+            const month = String(monthIndex + 1).padStart(2, '0');
+            const key = `copro_invoices_${currentYear}_${month}`;
+            const invoices = JSON.parse(localStorage.getItem(key) || '[]');
+
+            document.querySelectorAll('#paymentInMonthTabs .month-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === monthIndex);
+            });
+
+            let html = `<table class="records-table">
+                <thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th class="amount-in">Amount</th></tr></thead>
+                <tbody>`;
+
+            let total = 0;
+            invoices.forEach(inv => {
+                html += `<tr><td>${inv.invoiceNumber}</td><td>${inv.date}</td><td>${inv.party}</td><td class="amount-in">RM ${inv.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`;
+                total += inv.amount;
+            });
+
+            html += `</tbody></table>`;
+            html += `<div class="monthly-summary"><div class="summary-row"><span class="summary-label">Total Income:</span><span class="summary-value positive">RM ${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div></div>`;
+
+            document.getElementById('invoicesContent').innerHTML = html;
+        }
+
+        function displayPaymentOut() {
+            const monthTabs = document.getElementById('paymentOutMonthTabs');
+            monthTabs.innerHTML = '';
+            let hasData = false;
+
+            for (let m = 0; m < 12; m++) {
+                const month = String(m + 1).padStart(2, '0');
+                const key = `copro_payments_${currentYear}_${month}`;
+                const data = JSON.parse(localStorage.getItem(key) || '[]');
+                
+                if (data.length > 0) {
+                    hasData = true;
+                    const btn = document.createElement('button');
+                    btn.className = 'month-tab' + (m === currentMonth ? ' active' : '');
+                    btn.textContent = months[m].substring(0, 3) + ` (${data.length})`;
+                    btn.onclick = () => showMonthPayments(m);
+                    monthTabs.appendChild(btn);
+                }
+            }
+
+            if (!hasData) {
+                document.getElementById('paymentsContent').innerHTML = '<div class="no-data">No payments recorded for ' + currentYear + '</div>';
+            } else {
+                showMonthPayments(currentMonth);
+            }
+        }
+
+        function showMonthPayments(monthIndex) {
+            const month = String(monthIndex + 1).padStart(2, '0');
+            const key = `copro_payments_${currentYear}_${month}`;
+            const payments = JSON.parse(localStorage.getItem(key) || '[]');
+
+            document.querySelectorAll('#paymentOutMonthTabs .month-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === monthIndex);
+            });
+
+            let html = `<table class="records-table">
+                <thead><tr><th>Date</th><th>Supplier</th><th>Purpose</th><th class="amount-out">Amount</th><th>Action</th></tr></thead>
+                <tbody>`;
+
+            let total = 0;
+            payments.forEach((pay, idx) => {
+                html += `<tr><td>${pay.date}</td><td>${pay.party}</td><td>${pay.purpose}</td><td class="amount-out">RM ${pay.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td><td><button class="remove-btn" onclick="removePayment(${monthIndex}, ${idx})">Delete</button></td></tr>`;
+                total += pay.amount;
+            });
+
+            html += `</tbody></table>`;
+            html += `<div class="monthly-summary"><div class="summary-row"><span class="summary-label">Total Expenses:</span><span class="summary-value negative">RM ${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div></div>`;
+
+            document.getElementById('paymentsContent').innerHTML = html;
+        }
+
+        function removePayment(monthIndex, paymentIndex) {
+            if (confirm('Delete this payment record?')) {
+                const month = String(monthIndex + 1).padStart(2, '0');
+                const key = `copro_payments_${currentYear}_${month}`;
+                let payments = JSON.parse(localStorage.getItem(key) || '[]');
+                payments.splice(paymentIndex, 1);
+                localStorage.setItem(key, JSON.stringify(payments));
+                showMessage('Payment deleted', 'success');
+                displayPaymentOut();
+            }
+        }
+
+        function displaySummary() {
+            const monthTabs = document.getElementById('summaryMonthTabs');
+            monthTabs.innerHTML = '';
+
+            for (let m = 0; m < 12; m++) {
+                const btn = document.createElement('button');
+                btn.className = 'month-tab' + (m === currentMonth ? ' active' : '');
+                btn.textContent = months[m].substring(0, 3);
+                btn.onclick = () => showMonthSummary(m);
+                monthTabs.appendChild(btn);
+            }
+
+            showMonthSummary(currentMonth);
+            updateYearlySummary();
+        }
+
+        function showMonthSummary(monthIndex) {
+            const month = String(monthIndex + 1).padStart(2, '0');
+            const invKey = `copro_invoices_${currentYear}_${month}`;
+            const payKey = `copro_payments_${currentYear}_${month}`;
+            
+            const invoices = JSON.parse(localStorage.getItem(invKey) || '[]');
+            const payments = JSON.parse(localStorage.getItem(payKey) || '[]');
+
+            document.querySelectorAll('#summaryMonthTabs .month-tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === monthIndex);
+            });
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+            let html = `<h3>${months[monthIndex]} ${currentYear}</h3>`;
+            
+            if (invoices.length > 0) {
+                html += `<h4 style="color: #059669; margin-top: 20px;">Income</h4>
+                    <table class="records-table">
+                        <thead><tr><th>Date</th><th>Customer</th><th class="amount-in">Amount</th></tr></thead>
+                        <tbody>`;
+                invoices.forEach(inv => {
+                    html += `<tr><td>${inv.date}</td><td>${inv.party}</td><td class="amount-in">RM ${inv.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`;
+                    totalIncome += inv.amount;
+                });
+                html += `</tbody></table>`;
+            }
+
+            if (payments.length > 0) {
+                html += `<h4 style="color: #dc2626; margin-top: 20px;">Expenses</h4>
+                    <table class="records-table">
+                        <thead><tr><th>Date</th><th>Supplier</th><th>Purpose</th><th class="amount-out">Amount</th></tr></thead>
+                        <tbody>`;
+                payments.forEach(pay => {
+                    html += `<tr><td>${pay.date}</td><td>${pay.party}</td><td>${pay.purpose}</td><td class="amount-out">RM ${pay.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>`;
+                    totalExpense += pay.amount;
+                });
+                html += `</tbody></table>`;
+            }
+
+            const netProfit = totalIncome - totalExpense;
+            html += `<div class="monthly-summary">
+                <div class="summary-row">
+                    <span class="summary-label">Total Income:</span>
+                    <span class="summary-value positive">RM ${totalIncome.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Total Expenses:</span>
+                    <span class="summary-value negative">RM ${totalExpense.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+                <div class="summary-row" style="border-top: 2px solid #059669; padding-top: 10px; margin-top: 10px;">
+                    <span class="summary-label" style="font-size: 16px;">Net Profit / (Loss):</span>
+                    <span class="summary-value ${netProfit >= 0 ? 'positive' : 'negative'}" style="font-size: 16px;">RM ${netProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                </div>
+            </div>`;
+
+            document.getElementById('summaryContent').innerHTML = html;
+        }
+
+        function updateYearlySummary() {
+            let yearlyIncome = 0;
+            let yearlyExpense = 0;
+
+            for (let m = 0; m < 12; m++) {
+                const month = String(m + 1).padStart(2, '0');
+                const invKey = `copro_invoices_${currentYear}_${month}`;
+                const payKey = `copro_payments_${currentYear}_${month}`;
+                
+                const invoices = JSON.parse(localStorage.getItem(invKey) || '[]');
+                const payments = JSON.parse(localStorage.getItem(payKey) || '[]');
+                
+                invoices.forEach(inv => yearlyIncome += inv.amount);
+                payments.forEach(pay => yearlyExpense += pay.amount);
+            }
+
+            const netProfit = yearlyIncome - yearlyExpense;
+
+            document.getElementById('yearlyIncome').textContent = 'RM ' + yearlyIncome.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('yearlyExpenses').textContent = 'RM ' + yearlyExpense.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('yearlyNet').textContent = 'RM ' + netProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('yearlyNet').style.color = netProfit >= 0 ? '#059669' : '#dc2626';
+        }
+
+        function switchTab(event, tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'summary') {
+                updateYearlySummary();
+            }
+        }
+
+        function formatAmount(num) {
+            return Math.round(num).toLocaleString('en-US');
+        }
+
+        function exportToExcel() {
+            const exportKey = `copro_export_${currentYear}`;
+            const alreadyExported = localStorage.getItem(exportKey);
+
+            if (alreadyExported) {
+                showMessage(`⚠️ Annual Excel Data for year ${currentYear} has already been created. Delete the file if you need to regenerate.`, 'error');
+                return;
+            }
+
+            let totalRecords = 0;
+            for (let m = 0; m < 12; m++) {
+                const month = String(m + 1).padStart(2, '0');
+                const invKey = `copro_invoices_${currentYear}_${month}`;
+                const payKey = `copro_payments_${currentYear}_${month}`;
+                const invoices = JSON.parse(localStorage.getItem(invKey) || '[]');
+                const payments = JSON.parse(localStorage.getItem(payKey) || '[]');
+                totalRecords += invoices.length + payments.length;
+            }
+
+            if (totalRecords === 0) {
+                showMessage(`⚠️ No data to export - Please record invoices or payments first.`, 'error');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+
+            for (let m = 0; m < 12; m++) {
+                const month = String(m + 1).padStart(2, '0');
+                const invKey = `copro_invoices_${currentYear}_${month}`;
+                const payKey = `copro_payments_${currentYear}_${month}`;
+                const invoices = JSON.parse(localStorage.getItem(invKey) || '[]');
+                const payments = JSON.parse(localStorage.getItem(payKey) || '[]');
+
+                let sheetData = [
+                    ['COPRO ASIA RESOURCES'],
+                    ['PROFIT & LOSS'],
+                    [months[m] + ' ' + currentYear],
+                    [],
+                    ['INCOME'],
+                    ['Invoice', 'Date', 'Customer', 'Amount (RM)']
+                ];
+
+                let totalIncome = 0;
+                invoices.forEach(inv => {
+                    sheetData.push([inv.invoiceNumber, inv.date, inv.party, formatAmount(inv.amount)]);
+                    totalIncome += inv.amount;
+                });
+
+                sheetData.push(['', '', 'Total Income:', formatAmount(totalIncome)]);
+                sheetData.push([]);
+                sheetData.push(['EXPENSES']);
+                sheetData.push(['Date', 'Supplier', 'Purpose', 'Amount (RM)']);
+
+                let totalExpense = 0;
+                payments.forEach(pay => {
+                    sheetData.push([pay.date, pay.party, pay.purpose, formatAmount(pay.amount)]);
+                    totalExpense += pay.amount;
+                });
+
+                sheetData.push(['', '', 'Total Expenses:', formatAmount(totalExpense)]);
+                sheetData.push([]);
+                sheetData.push(['', '', 'NET PROFIT / (LOSS):', formatAmount(totalIncome - totalExpense)]);
+
+                const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                ws['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 15 }];
+                XLSX.utils.book_append_sheet(wb, ws, months[m].substring(0, 3));
+            }
+
+            let summaryData = [
+                ['COPRO ASIA RESOURCES'],
+                ['PROFIT & LOSS STATEMENT'],
+                [currentYear],
+                [],
+                ['Income'],
+            ];
+
+            let yearlyIncome = 0;
+            let yearlyExpense = 0;
+
+            for (let m = 0; m < 12; m++) {
+                const month = String(m + 1).padStart(2, '0');
+                const invKey = `copro_invoices_${currentYear}_${month}`;
+                const invoices = JSON.parse(localStorage.getItem(invKey) || '[]');
+                let monthIncome = 0;
+                invoices.forEach(inv => monthIncome += inv.amount);
+                yearlyIncome += monthIncome;
+                if (monthIncome > 0) {
+                    summaryData.push([months[m], formatAmount(monthIncome)]);
+                }
+            }
+
+            summaryData.push(['', '']);
+            summaryData.push(['Total Income', formatAmount(yearlyIncome)]);
+            summaryData.push(['', '']);
+            summaryData.push(['Expenses']);
+
+            for (let m = 0; m < 12; m++) {
+                const month = String(m + 1).padStart(2, '0');
+                const payKey = `copro_payments_${currentYear}_${month}`;
+                const payments = JSON.parse(localStorage.getItem(payKey) || '[]');
+                let monthExpense = 0;
+                payments.forEach(pay => monthExpense += pay.amount);
+                yearlyExpense += monthExpense;
+                if (monthExpense > 0) {
+                    summaryData.push([months[m], formatAmount(monthExpense)]);
+                }
+            }
+
+            summaryData.push(['', '']);
+            summaryData.push(['Total Expenses', formatAmount(yearlyExpense)]);
+            summaryData.push(['', '']);
+            summaryData.push(['NET PROFIT / (LOSS)', formatAmount(yearlyIncome - yearlyExpense)]);
+
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            wsSummary['!cols'] = [{ wch: 20 }, { wch: 15 }];
+            XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+            const fileName = `ACCOUNT-COPRO-${currentYear}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            localStorage.setItem(exportKey, JSON.stringify({
+                exportedAt: new Date().toISOString(),
+                fileName: fileName
+            }));
+
+            showMessage(`✅ Successfully created - Annual Excel Data for year ${currentYear} has been created as ${fileName}`, 'success');
+        }
+
+        function restoreFromExcel() {
+            const fileInput = document.getElementById('excelFileInput');
+            const restoreMsg = document.getElementById('restoreMessage');
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                showRestoreMessage('⚠️ Please select an Excel file first', 'error');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    let restoredRecords = 0;
+
+                    workbook.SheetNames.forEach(sheetName => {
+                        if (sheetName === 'Summary' || sheetName === 'P&L Summary') {
+                            return;
+                        }
+
+                        const worksheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                        let monthNum = null;
+                        for (let m = 0; m < 12; m++) {
+                            if (sheetName.toLowerCase().includes(months[m].toLowerCase().substring(0, 3))) {
+                                monthNum = String(m + 1).padStart(2, '0');
+                                break;
+                            }
+                        }
+
+                        if (monthNum && rows.length > 5) {
+                            const year = currentYear;
+                            let invoices = [];
+                            let payments = [];
+                            let section = null;
+
+                            for (let i = 5; i < rows.length; i++) {
+                                const row = rows[i];
+                                if (!row || row.length === 0) continue;
+
+                                const firstCell = row[0] ? row[0].toString().toUpperCase() : '';
+
+                                if (firstCell.includes('INCOME')) {
+                                    section = 'income';
+                                    continue;
+                                } else if (firstCell.includes('EXPENSE')) {
+                                    section = 'expense';
+                                    continue;
+                                } else if (firstCell.includes('TOTAL') || firstCell.includes('NET')) {
+                                    section = null;
+                                    continue;
+                                }
+
+                                if (section === 'income' && row.length >= 4 && !isNaN(row[3])) {
+                                    invoices.push({
+                                        invoiceNumber: row[0],
+                                        date: row[1],
+                                        party: row[2],
+                                        amount: parseFloat(row[3]),
+                                        type: 'invoice'
+                                    });
+                                    restoredRecords++;
+                                } else if (section === 'expense' && row.length >= 4 && !isNaN(row[3])) {
+                                    payments.push({
+                                        date: row[0],
+                                        party: row[1],
+                                        purpose: row[2],
+                                        amount: parseFloat(row[3]),
+                                        type: 'payment'
+                                    });
+                                    restoredRecords++;
+                                }
+                            }
+
+                            if (invoices.length > 0) {
+                                localStorage.setItem(`copro_invoices_${year}_${monthNum}`, JSON.stringify(invoices));
+                            }
+                            if (payments.length > 0) {
+                                localStorage.setItem(`copro_payments_${year}_${monthNum}`, JSON.stringify(payments));
+                            }
+                        }
+                    });
+
+                    if (restoredRecords === 0) {
+                        showRestoreMessage('⚠️ No valid data found. Make sure it was created by this system.', 'error');
+                    } else {
+                        showRestoreMessage(`✅ Successfully restored - ${restoredRecords} records restored! Refresh to see all data.`, 'success');
+                        fileInput.value = '';
+                        setTimeout(() => {
+                            displayPaymentIn();
+                            displayPaymentOut();
+                            displaySummary();
+                        }, 500);
+                    }
+                } catch (error) {
+                    showRestoreMessage(`❌ Error reading file: ${error.message}`, 'error');
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ This will delete ALL data!\n\nMake sure you have exported to Excel first!\n\nContinue?')) {
+                for (let m = 0; m < 12; m++) {
+                    const month = String(m + 1).padStart(2, '0');
+                    localStorage.removeItem(`copro_invoices_${currentYear}_${month}`);
+                    localStorage.removeItem(`copro_payments_${currentYear}_${month}`);
+                }
+                showRestoreMessage('✅ All data cleared. Refresh page to start fresh.', 'success');
+                setTimeout(() => { location.reload(); }, 2000);
+            }
+        }
+
+        function showMessage(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type}`;
+            setTimeout(() => {
+                statusDiv.className = 'status-message';
+            }, 4000);
+        }
+
+        function showRestoreMessage(message, type) {
+            const msgDiv = document.getElementById('restoreMessage');
+            msgDiv.innerHTML = `<div class="status-message ${type}" style="opacity: 1; padding: 15px; border-radius: 5px; text-align: center;">${message}</div>`;
+        }
+
+        // P&L Report Functions
+        function initializePLDefaultDates() {
+            const today = new Date();
+            const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+            
+            document.getElementById('plStartDate').valueAsDate = oneYearAgo;
+            document.getElementById('plEndDate').valueAsDate = today;
+        }
+
+        function generateCustomPLReport() {
+            const startDateStr = document.getElementById('plStartDate').value;
+            const endDateStr = document.getElementById('plEndDate').value;
+            const validationMsg = document.getElementById('plValidationMessage');
+
+            if (!startDateStr || !endDateStr) {
+                validationMsg.innerHTML = '<div class="status-message error" style="opacity: 1; padding: 15px; border-radius: 5px;">⚠️ Please enter both start and end dates</div>';
+                return;
+            }
+
+            const startDate = new Date(startDateStr + 'T00:00:00');
+            const endDate = new Date(endDateStr + 'T23:59:59');
+
+            if (endDate <= startDate) {
+                validationMsg.innerHTML = '<div class="status-message error" style="opacity: 1; padding: 15px; border-radius: 5px;">⚠️ End date must be after start date</div>';
+                return;
+            }
+
+            const daysDiff = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+            if (daysDiff < 330 || daysDiff > 400) {
+                validationMsg.innerHTML = `<div class="status-message error" style="opacity: 1; padding: 15px; border-radius: 5px;">⚠️ Financial period should be approximately 365 days (you selected ${daysDiff} days).</div>`;
+                return;
+            }
+
+            validationMsg.innerHTML = `<div class="status-message success" style="opacity: 1; padding: 15px; border-radius: 5px;">✅ Valid financial period: ${daysDiff} days</div>`;
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const incomeDetails = [];
+            const expenseDetails = [];
+
+            // Collect invoices from all months in date range
+            for (let y = 2024; y <= new Date().getFullYear() + 1; y++) {
+                for (let m = 1; m <= 12; m++) {
+                    const month = String(m).padStart(2, '0');
+                    const invKey = `copro_invoices_${y}_${month}`;
+                    const payKey = `copro_payments_${y}_${month}`;
+                    
+                    try {
+                        const invoices = JSON.parse(localStorage.getItem(invKey) || '[]');
+                        const payments = JSON.parse(localStorage.getItem(payKey) || '[]');
+
+                        invoices.forEach(inv => {
+                            const invDate = parseInvoiceDateStrict(inv.date);
+                            if (invDate >= startDate && invDate <= endDate) {
+                                totalIncome += inv.amount;
+                                incomeDetails.push({ date: inv.date, description: inv.invoiceNumber || 'Invoice', amount: inv.amount });
+                            }
+                        });
+
+                        payments.forEach(pay => {
+                            const payDate = parseInvoiceDateStrict(pay.date);
+                            if (payDate >= startDate && payDate <= endDate) {
+                                totalExpense += pay.amount;
+                                expenseDetails.push({ date: pay.date, description: pay.purpose || pay.party || 'Payment', amount: pay.amount });
+                            }
+                        });
+                    } catch(e) {
+                        console.log('Error processing month ' + y + '-' + month);
+                    }
+                }
+            }
+
+            const netProfit = totalIncome - totalExpense;
+            const reportYear = startDate.getFullYear();
+
+            // Professional P&L HTML
+            let reportHTML = `
+                <div style="background: white; padding: 40px; border-radius: 5px; border: 1px solid #ddd; margin-top: 20px; max-width: 800px; margin-left: auto; margin-right: auto; font-family: Arial, sans-serif;">
+                    <div style="text-align: center; margin-bottom: 40px; border-bottom: 3px solid #333; padding-bottom: 20px;">
+                        <h2 style="color: #000; margin: 0 0 5px 0; font-size: 18px;">COPRO ASIA RESOURCES</h2>
+                        <p style="color: #666; font-size: 12px; margin: 3px 0;">A-5-9 EMPIRE TOWER, SS16/1, 47500 SUBANG JAYA, SELANGOR</p>
+                        <h3 style="color: #000; margin: 20px 0 5px 0; font-size: 20px; font-weight: bold;">Profit & Loss</h3>
+                        <p style="color: #000; font-size: 13px; margin: 5px 0;">${formatDateDisplay(startDate)} through ${formatDateDisplay(endDate)}</p>
+                    </div>
+
+                    <div style="margin: 30px 0;">
+                        <h4 style="color: #000; font-size: 14px; font-weight: bold; margin: 15px 0 10px 0;">Income</h4>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #000; text-align: left;">Sales</td>
+                                <td style="padding: 8px 0; border-bottom: 1px solid #000; text-align: right; width: 150px;">RM ${totalIncome.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="margin: 30px 0;">
+                        <h4 style="color: #000; font-size: 14px; font-weight: bold; margin: 15px 0 10px 0;">Cost of Sales</h4>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 6px 20px 6px 0; text-align: left;">Purchases & Expenses</td>
+                                <td style="padding: 6px 0; text-align: right; width: 150px;">RM ${totalExpense.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #000; border-bottom: 2px solid #000;">
+                                <td style="padding: 8px 20px 8px 0; text-align: left; font-weight: bold;">Total Cost of Sales</td>
+                                <td style="padding: 8px 0; text-align: right; font-weight: bold;">RM ${totalExpense.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="margin: 30px 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr style="border-top: 2px solid #000; border-bottom: 2px solid #000;">
+                                <td style="padding: 10px 20px 10px 0; text-align: left; font-weight: bold; font-size: 15px;">Gross Profit</td>
+                                <td style="padding: 10px 0; text-align: right; font-weight: bold; font-size: 15px;">RM ${(totalIncome - totalExpense).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="margin: 30px 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr style="border-top: 2px solid #000; border-bottom: 2px solid #000;">
+                                <td style="padding: 10px 20px 10px 0; text-align: left; font-weight: bold; font-size: 15px;">Net Profit / (Loss)</td>
+                                <td style="padding: 10px 0; text-align: right; font-weight: bold; font-size: 16px; color: ${netProfit >= 0 ? '#059669' : '#dc2626'};">RM ${netProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #666;">
+                        <p><strong>Summary:</strong></p>
+                        <p>Total Income: RM ${totalIncome.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                        <p>Total Expenses: RM ${totalExpense.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                        <p style="margin-top: 10px; font-style: italic;">Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('plReportContent').innerHTML = reportHTML;
+            document.getElementById('exportPLButton').style.display = 'inline-block';
+        }
+
+        function exportCustomPLAsExcel() {
+            const startDateStr = document.getElementById('plStartDate').value;
+            const endDateStr = document.getElementById('plEndDate').value;
+
+            if (!startDateStr || !endDateStr) {
+                showMessage('⚠️ Please generate report first', 'error');
+                return;
+            }
+
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(endDateStr);
+            const reportYear = startDate.getFullYear();
+
+            // Collect data
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            for (let y = 2024; y <= new Date().getFullYear() + 1; y++) {
+                for (let m = 1; m <= 12; m++) {
+                    const month = String(m).padStart(2, '0');
+                    const invKey = `copro_invoices_${y}_${month}`;
+                    const payKey = `copro_payments_${y}_${month}`;
+                    
+                    const invoices = JSON.parse(localStorage.getItem(invKey) || '[]');
+                    const payments = JSON.parse(localStorage.getItem(payKey) || '[]');
+
+                    invoices.forEach(inv => {
+                        const invDate = parseInvoiceDateStrict(inv.date);
+                        if (invDate >= startDate && invDate <= endDate) {
+                            totalIncome += inv.amount;
+                        }
+                    });
+
+                    payments.forEach(pay => {
+                        const payDate = parseInvoiceDateStrict(pay.date);
+                        if (payDate >= startDate && payDate <= endDate) {
+                            totalExpense += pay.amount;
+                        }
+                    });
+                }
+            }
+
+            const netProfit = totalIncome - totalExpense;
+
+            // Create professional Excel sheet
+            const wb = XLSX.utils.book_new();
+            const sheetData = [];
+
+            // Header section
+            sheetData.push(['COPRO ASIA RESOURCES']);
+            sheetData.push(['A-5-9 EMPIRE TOWER, SS16/1, 47500 SUBANG JAYA, SELANGOR']);
+            sheetData.push(['']);
+            sheetData.push(['Profit & Loss']);
+            sheetData.push([`${formatDateDisplay(startDate)} through ${formatDateDisplay(endDate)}`]);
+            sheetData.push(['']);
+
+            // Income section
+            sheetData.push(['Income']);
+            sheetData.push(['Sales', '', totalIncome]);
+            sheetData.push(['']);
+
+            // Cost of Sales section
+            sheetData.push(['Cost of Sales']);
+            sheetData.push(['Purchases & Expenses', '', totalExpense]);
+            sheetData.push(['Total Cost of Sales', '', totalExpense]);
+            sheetData.push(['']);
+
+            // Gross Profit
+            sheetData.push(['Gross Profit', '', totalIncome - totalExpense]);
+            sheetData.push(['']);
+
+            // Net Profit/Loss
+            sheetData.push(['Net Profit / (Loss)', '', netProfit]);
+
+            const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+            // Set column widths
+            ws['!cols'] = [{ wch: 30 }, { wch: 10 }, { wch: 18 }];
+
+            // Apply formatting to cells
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({r: R, c: C});
+                    if (!ws[cellAddress]) continue;
+                    
+                    ws[cellAddress].alignment = { horizontal: 'left', vertical: 'center', wrapText: true };
+                    
+                    // Bold headers
+                    if (R === 0 || R === 3 || R === 7 || R === 10 || R === 14) {
+                        ws[cellAddress].font = { bold: true, size: 12 };
+                    }
+                    
+                    // Right align numbers (column C)
+                    if (C === 2) {
+                        ws[cellAddress].alignment = { horizontal: 'right', vertical: 'center' };
+                    }
+                    
+                    // Format currency values
+                    if (C === 2 && R > 6) {
+                        ws[cellAddress].numFmt = '"RM"#,##0.00';
+                    }
+                }
+            }
+
+            XLSX.utils.book_append_sheet(wb, ws, 'P&L Statement');
+
+            const fileName = `COPRO_PL_${reportYear}_${startDateStr.replace(/-/g, '')}_to_${endDateStr.replace(/-/g, '')}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            showMessage(`✅ Professional P&L Report exported as ${fileName}`, 'success');
+        }
+
+        function parseInvoiceDateStrict(dateStr) {
+            // Parse DD-MM-YYYY format strictly
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                const day = parseInt(parts[0]);
+                const month = parseInt(parts[1]);
+                const year = parseInt(parts[2]);
+                return new Date(year, month - 1, day);
+            }
+            return new Date();
+        }
+
+        function formatDateDisplay(date) {
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+    </script>
+</body>
+</html>
